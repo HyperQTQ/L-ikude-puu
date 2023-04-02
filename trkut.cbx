@@ -1,0 +1,120 @@
+% Põhineb stiilil authoryear-ibid
+% https://github.com/plk/biblatex/blob/dev/tex/latex/biblatex/cbx/authoryear-ibid.cbx
+\ProvidesFile{trkut.cbx}
+
+\ExecuteBibliographyOptions{labeldateparts,uniquename=false,uniquelist,pagetracker,ibidtracker=constrict,maxcitenames=2,mincitenames=1,autocite=inline}
+
+\providecommand*{\mkibid}[1]{#1}
+\DefineBibliographyStrings{english}{%
+  ibidem = {\textit{ibid.}},
+  andothers = {\textit{et al.}},
+}
+
+\newbool{cbx:parens}
+\newbool{cbx:loccit}
+
+\DeclareBibliographyOption[boolean]{ibidpage}[true]{%
+  \ifstrequal{#1}{true}
+    {\ExecuteBibliographyOptions{loccittracker=constrict}}
+    {\ExecuteBibliographyOptions{loccittracker=false}}}
+
+% Käsk pealkirjade lühendamiseks lõpetades punktiiriga
+\def\@threefirstwords #1 #2 #3 #4\\#5{%
+  \ifblank{#1}{}{#1}\ifblank{#2}{}{ #2}\ifblank{#3}{}{ #3}\ifblank{#4}{}{#5}%
+}%
+\edef\threefirstwords#1#2{\noexpand\@threefirstwords#1\space\space\space\noexpand\\{#2}}
+
+% don't use urldate as a substitute for date if it is missing
+\DeclareLabeldate{%
+    \field{date}
+    \field{year}
+    \field{eventdate}
+    \field{origdate}
+    %\field{urldate}
+    \literal{}
+}
+
+\usepackage{xstring}
+
+\newbibmacro*{cite}{%
+  \global\boolfalse{cbx:loccit}%
+  \iffieldundef{shorthand}
+    {\ifthenelse{\ifciteibid\AND\NOT\iffirstonpage}
+       {\usebibmacro{cite:ibid}}%
+       {\ifentrytype{customa}{%
+        % customa is for the (Name dd.mm.yyyy: lisa n) format
+        \printtext[bibhyperref]{\printnames{labelname}
+        \setunit{\nameyeardelim}%
+        \mkbibdateshort{year}{month}{day}}%
+        \addcolon\newunit%
+        \printfield{addendum}%
+       }{%
+       \printtext[bibhyperref]{\ifthenelse{\ifnameundef{labelname}}%
+          {\usebibmacro{cite:label}%
+           \setunit{\addspace}}
+          {\printnames{labelname}%
+           \setunit{\nameyeardelim}}%
+        \usebibmacro{cite:labelyear+extrayear}%
+        % if label title starts with s.v.
+       \StrLeft{\strfield{labeltitle}}{14}[\maybesv]%
+        \IfStrEq{\maybesv}{\detokenize{\textit{s.v.}}}
+         {\addspace%
+         \usebibmacro{cite:label}}{}%
+        }}}}
+    {\usebibmacro{cite:shorthand}}}
+
+\newbibmacro*{cite:shorthand}{%
+  \printtext[bibhyperref]{\printfield{shorthand}}}
+
+\newbibmacro*{cite:ibid}{%
+  \printtext[bibhyperref]{\bibstring[\mkibid]{ibidem}}%
+  \ifloccit
+    {\global\booltrue{cbx:loccit}}
+    {}}
+
+\newbibmacro*{cite:label}{%
+  \iffieldundef{label}
+    {\printfield[citetitle]{labeltitle}}
+    {\printfield{label}}}
+
+\newbibmacro*{cite:labelyear+extrayear}{%
+  \iffieldundef{labelyear}
+    {}
+    {\printfield{labelyear}%
+       \printfield{extradate}}}
+
+\newbibmacro*{cite:postnote}{%
+  \ifbool{cbx:loccit}
+    {}
+    {\usebibmacro{postnote}}}
+
+\DeclareCiteCommand{\cite}
+  {\usebibmacro{prenote}}
+  {\usebibmacro{citeindex}%
+   \usebibmacro{cite}}
+  {\multicitedelim}
+  {\usebibmacro{cite:postnote}}
+
+\DeclareCiteCommand{\parencite}[\mkbibparens]
+  {\usebibmacro{prenote}}
+  {\usebibmacro{citeindex}%
+   \usebibmacro{cite}}
+  {\multicitedelim}
+  {\usebibmacro{cite:postnote}}
+
+% Leheküljenumbrid
+\DeclareFieldFormat{pages}{lk #1}
+
+% Nimega viitamisel pole kaldkirja, aga ainult kolm esimest sõna
+\DeclareFieldFormat{citetitle}{\threefirstwords{#1}{\dots}}
+\DeclareFieldFormat[article,book,misc,customa,online]{citetitle}{\threefirstwords{#1}{\dots}}
+
+% Tsiteerimissulgudes enne aastat on koolon ja enne leheküljenumbrit koma
+\renewcommand{\postnotedelim}{: }
+\renewcommand{\finalnamedelim}{, }
+
+% Leheküljenumbrite ette viidetes ei lisata "p. " vms
+\DeclareFieldFormat{postnote}{#1}
+
+% vim: syntax=tex
+\endinput

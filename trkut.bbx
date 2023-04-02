@@ -1,0 +1,208 @@
+% See fail on kasutatud materjalide jaoks
+\ProvidesFile{trkut.bbx}
+
+\ExecuteBibliographyOptions{language=auto, sortlocale=auto, dateabbrev=false, maxbibnames=99, giveninits=true, sorting=nty, autolang=hyphen}
+
+\newbibmacro*{begentry}{}
+\newbibmacro*{finentry}{\finentry}
+
+% Taandridu pole
+\setlength\bibhang{0pt}
+
+% Eestikeelsed nimed
+\DefineBibliographyStrings{estonian}{%
+bibliography = {Kasutatud materjalid},
+references = {Kasutatud materjalid},
+}
+
+% tavaliselt biblatex kasutab \chapter*, mis ei lisa peatükki sisukorda.
+% asendame selle \addchap'iga
+\defbibheading{bibliography}{\addchap{#1}}
+
+% Reavahe 1.15
+\renewcommand*{\bibfont}{\normalfont\normalsize\linespread{1.15}\selectfont}
+
+% Ruum kasutatud materjalide vahel
+\setlength{\bibitemsep}{1em}
+
+% Perekonnanimi, eesnimi
+\DeclareNameAlias{author}{family-given}
+
+% sort names by how they're displayed, i.e. lastname and initials only
+\DeclareSortingNamekeyTemplate{
+    \keypart{
+        \namepart{family}
+    }
+    \keypart{
+        \namepart[inits=true]{given}
+    }
+    \keypart{
+        \namepart{prefix}
+    }
+    \keypart{
+        \namepart{suffix}
+    }
+}
+
+% Kasutatud materjali lõpus pole punkti
+% \renewcommand*\finentrypunct{}
+
+%% HACK: fix month name capitalization
+\DeclareFieldFormat{month}{
+\let\MakeCapitalBackup\MakeCapital%
+\let\MakeCapital\lowercase%
+\mkbibmonth{#1}
+\let\MakeCapital\MakeCapitalBackup%
+}
+
+\DeclareBibliographyDriver{article}{%
+  \usebibmacro{begentry}%
+  \usebibmacro{author+year+title}%
+  %\usebibmacro{journal}%
+  \printfield{journaltitle}%
+  \iffieldundef{volume}{%
+    \iffieldundef{pages}{}{%
+      \addcomma\addspace%
+    }%
+  }{%
+    \addcomma\addspace%
+    \printfield{volume}%
+    \iffieldundef{number}{}{%
+      \addspace%
+      \parentext{\printfield{number}}%
+    }%
+    \iffieldundef{pages}{}{%
+      \addcomma\addspace%
+    }%
+  }%
+  \usebibmacro{pages}%
+  \usebibmacro{url+urldate}%
+  \usebibmacro{finentry}
+}
+
+\DeclareBibliographyDriver{book}{%
+  \usebibmacro{begentry}%
+  \usebibmacro{author+year+title}
+  \usebibmacro{publisher+location+pages}%
+  \usebibmacro{url+urldate}%
+  \usebibmacro{finentry}
+}
+
+\DeclareBibliographyDriver{online}{%
+  \usebibmacro{begentry}%
+  \usebibmacro{author+year+title}
+  \usebibmacro{url+urldate}%
+  \usebibmacro{finentry}
+}
+
+\DeclareBibliographyDriver{unpublished}{%
+  \usebibmacro{begentry}%
+  \usebibmacro{author+year+title}
+  \usebibmacro{url+urldate}%
+  \usebibmacro{addendum}%
+  \usebibmacro{finentry}
+}
+\DeclareBibliographyAlias{customa}{unpublished}
+
+\DeclareBibliographyDriver{misc}{%
+  \usebibmacro{begentry}%
+  \usebibmacro{author+year+title}
+  \usebibmacro{publisher+location+pages}%
+  \usebibmacro{url+urldate}%
+  \usebibmacro{addendum}%
+  \usebibmacro{finentry}
+}
+
+\newbibmacro{author+year+title}{%
+  \ifnameundef{author}{%
+    \printfield{title}%
+  }{%
+    \printnames{author}%
+    \adddot%
+  }%
+  \iffieldundef{month}{%
+    \iffieldundef{year}{%
+      \addspace%
+    }{%
+      \addspace%
+      (%
+      \printfield{year}%
+      )%
+      \setunit{\addspace}%
+    }%
+  }{%
+    % XXX: see kasutab alati numbritega kuupäevi, kuigi juhendis kasutatakse
+    % mõndade allikaliikide jaoks ka sõnadega kuupäevi
+    \addspace%
+    (%
+    \mkbibdateshort{year}{month}{day}%
+    )%
+    \setunit{\addspace}%
+  }%
+  %\setunit{\labelnamepunct}\newblock
+  \ifnameundef{author}{}{%
+    \printfield{title}%
+    \iffieldundef{howpublished}{}{%
+      \addspace%
+      \printfield{howpublished}%
+    }%
+    \setunit{\adddot\addspace}%
+  }%
+}
+
+\newbibmacro*{publisher+location+pages}{%
+  \printlist{location}%
+  \iflistundef{publisher}
+    {\setunit*{\addcomma\space}}
+    {\setunit*{\addcolon\space}}%
+  \printlist{publisher}%
+  \iffieldundef{pages}{}{%
+    \setunit*{\addcomma\space}%
+    \printfield{pages}%
+  }
+  \newunit%
+}
+
+\newbibmacro*{pages}{%
+  \printfield{pages}%
+  \newunit%
+}
+
+\newbibmacro*{addendum}{
+  \iffieldundef{addendum}{}{%
+    \printfield{addendum}%
+    \adddot%
+  }%
+}
+
+\renewbibmacro*{url+urldate}{%
+	\printfield{url}%
+	\iffieldundef{urlyear}{}
+		{\addcomma\addspace%
+                \mkbibdateshort{urlyear}{urlmonth}{urlday}%
+	}
+}
+
+%\renewbibmacro*{journal}{%
+%	\printfield{journal}%
+%	\newunit%
+%}
+
+% Jutumärke ega muud eristust ei ole pealkirjadel
+\DeclareFieldFormat{title}{#1}
+\DeclareFieldFormat[article]{title}{#1}
+\DeclareFieldFormat[unpublished]{title}{#1}
+%\DeclareFieldFormat[article]{title}{\enquote*{#1}}
+% Leheküljenumbrid
+\DeclareFieldFormat{pages}{lk #1}
+% Väljaanne
+\DeclareFieldFormat[article]{volume}{nr #1}
+% Netiaadresside ette kirjutame "URL" asemel "Loetud"
+\DeclareFieldFormat{url}{Loetud\addcolon\space\url{#1}}
+% Ajakiri pole kaldkirjas
+\DeclareFieldFormat{journaltitle}{#1\isdot}
+\DeclareFieldFormat{howpublished}{[#1]}
+\DeclareFieldFormat{organization}{#1}
+
+% vim: syntax=tex
+\endinput
